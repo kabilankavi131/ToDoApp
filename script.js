@@ -47,16 +47,16 @@ async function signOutFromApp() {
     try {
         await signOut(auth)
 
-        // User signed out successfully
+
         console.log("User signed out")
 
         sessionStorage.clear()
         Swal.fire('Logout Successfully', "Thank You", 'success');
-        //VerificationEmail();
+
         checkAuthentication();
     }
     catch (error) {
-        // Handle errors
+
         console.error("Error signing out:", error)
     }
 }
@@ -72,13 +72,7 @@ function checkAuthentication() {
         // alert(user.email)
         // alert(user.photoURL)
         // alert(user.displayName);
-
-        // userName.innerHTML = user.displayName;
-        // userMail.innerHTML = "User Mail Id : " + user.email;
-        // userImage.src = user.photoURL;
-        // userData.style.visibility = "visible";
     } else {
-        // User is not authenticated, handle accordingly
         console.log("Logged out")
 
     }
@@ -89,14 +83,11 @@ window.addEventListener('load', checkAuthentication)
 
 
 
-
-
-
-var localTodo = []
-
-
 document.addEventListener('DOMContentLoaded', () => {
-    const users = JSON.parse(sessionStorage.getItem('user'))
+
+    const randomNumber = Math.floor(Math.random() * 30) + 1;
+    var imagesrc = "url(./Images/image" + randomNumber + ".jpg)";
+    document.body.style.backgroundImage = imagesrc;
     const todoInput = document.getElementById('new-todo');
     const addButton = document.getElementById('add-button');
 
@@ -104,15 +95,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const addTodo = () => {
         const title = todoInput.value.trim();
-        if (title) {
+        const user = JSON.parse(sessionStorage.getItem('user'))
+        if (title && user) {
             document.getElementById("noData").style.display = "none"
-            const user = JSON.parse(sessionStorage.getItem('user'))
             var inputValue = { title: title, completed: false }
-            localTodo.push(inputValue)
-            saveTodos()
             let userReference = ref(database, `usersData/${user.uid}`)
             push(userReference, inputValue);
             todoInput.value = '';
+            renderTodoFromDatabase(user.uid)
+        }
+        else {
+            if (!user)
+                Swal.fire('Please Sign Up', `Sign Up To use Your ToDOApp`, 'info');
         }
 
     };
@@ -125,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const user = JSON.parse(sessionStorage.getItem('user'))
     if (user) {
         const user = JSON.parse(sessionStorage.getItem('user'))
-        renderWinsFromDatabase(user.uid);
+        renderTodoFromDatabase(user.uid);
     }
 });
 
@@ -139,28 +133,23 @@ document.getElementById("logoutButton").addEventListener("click", () => {
     setTimeout(() => { location.reload() }, 2000)
 
 })
-const saveTodos = () => {
-    localStorage.setItem('localTodo', JSON.stringify(localTodo));
-};
+
 
 window.toggleComplete = (key) => {
     const user = JSON.parse(sessionStorage.getItem('user'));
     const userId = user.uid;
-    let userWinsRef = ref(database, `usersData/${userId}/${key}`);
+    let userTodoRef = ref(database, `usersData/${userId}/${key}`);
     let final = ref(database, `usersData/${userId}/${key}/completed`);
-    let completedValue = ""; // Initialize it here
+    let completedValue = "";
 
-    get(userWinsRef).then((snapshot) => {
+    get(userTodoRef).then((snapshot) => {
         if (snapshot.exists()) {
-            // Data exists at the specified location
+
             const completedData = snapshot.val();
-            // Do something with the retrieved data
-            completedValue = (completedData.completed === "true") ? "false" : "true"; // Toggle the value
-        } else {
-            // Data does not exist at the specified location
-            console.log("No data available");
+
+            completedValue = (completedData.completed === "true") ? "false" : "true";
         }
-        return set(final, completedValue); // Return the set operation
+        return set(final, completedValue);
     }).catch((error) => {
         console.error("Error getting data:", error);
     });
@@ -170,41 +159,41 @@ window.deleteTodo = (key) => {
     console.log("deleted")
     const user = JSON.parse(sessionStorage.getItem('user'))
     const userId = user.uid;
-    let userWinsRef = ref(database, `usersData/${userId}/${key}`);
-    remove(userWinsRef)
-    renderWinsFromDatabase(userId)
+    let userTodoRef = ref(database, `usersData/${userId}/${key}`);
+    remove(userTodoRef)
 };
 
-function renderWinsFromDatabase(userId) {
-    let userWinsRef = ref(database, `usersData/${userId}`)
-    onValue(userWinsRef, function (snapshot) {
+function renderTodoFromDatabase(userId) {
+    let userTodoRef = ref(database, `usersData/${userId}`)
+    onValue(userTodoRef, function (snapshot) {
         if (snapshot.exists()) {
-            document.getElementById("todo-list").style.height="200px";
+            document.getElementById("todo-list").style.height = "200px";
             const todoList = document.getElementById('todo-list');
             todoList.innerHTML = "";
-            const winsObj = snapshot.val();
-            const length = Object.keys(winsObj).length;
-            for (const key in winsObj) {
-                if (winsObj.hasOwnProperty(key)) {
-                    // console.log(key + ": " + winsObj[key].title);
+            const todoObj = snapshot.val();
+            // const length = Object.keys(todoObj).length;
+            for (const key in todoObj) {
+                if (todoObj.hasOwnProperty(key)) {
                     const li = document.createElement('li');
-                    li.className = (winsObj[key].completed === "true") ? 'completed' : 'notcompleted';
                     li.innerHTML = `
            <div>
-           <span>${winsObj[key].title}</span>
-           <div>
-           <button onclick="toggleComplete('${key}')">${(winsObj[key].completed === "true") ? 'Undo' : 'Complete'}</button>
+           <span id="usertodocompleted">${todoObj[key].title}</span>
+           <br>
+           <div class="twoButttons">
+           <button onclick="toggleComplete('${key}')">${(todoObj[key].completed === "true") ? 'Undo' : 'Complete'}</button>
            <button onclick="deleteTodo('${key}')">Delete</button>           
            </div>
            </div>
         `;
                     todoList.appendChild(li);
+                    document.getElementById('usertodocompleted').className = (todoObj[key].completed === "true") ? 'completed' : 'notcompleted';
+
                 }
             }
 
         } else {
             document.getElementById("noData").innerText = "No records here... yet";
-            document.getElementById("todo-list").style.height="50px";
+            document.getElementById("todo-list").style.height = "50px";
             document.getElementById("todo-list").innerText = "";
         }
     })

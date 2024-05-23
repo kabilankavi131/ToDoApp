@@ -6,9 +6,11 @@ body {
   height: 100vh;
   background-color: #f0f0f0;
   margin: 0;
-  background: url("Images/background.png") no-repeat;
+  background: url("Images/image30.jpg") no-repeat;
   background-size: cover;
   background-position: center;
+  backdrop-filter: saturate(150%);
+  -webkit-backdrop-filter: blur(1px) saturate(100%);
 }
 
 ::-webkit-scrollbar {
@@ -28,6 +30,7 @@ body {
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.125);
 }
 
 .todo-app h1 {
@@ -60,6 +63,7 @@ body {
   list-style-type: none;
   padding: 0;
   margin-top: 20px;
+  height: 50px;
 }
 
 #todo-list li {
@@ -70,14 +74,24 @@ body {
   border-bottom: 1px solid #ccc;
 }
 
-#todo-list li.completed {
+.completed {
   text-decoration: line-through;
 }
 
-#todo-list li.notcompleted {
-  text-decoration: dashed;
+.notcompleted {
+  text-decoration: none;
 }
-
+.usertodo {
+  text-decoration: line-through;
+}
+.twoButttons {
+  padding: 5px;
+  text-decoration: none;
+}
+.twoButttons button {
+  margin: 5px;
+  background-color: #4183f3;
+}
 #todo-list li button {
   border: none;
   background-color: #dc3545;
