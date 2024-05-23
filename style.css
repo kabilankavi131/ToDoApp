@@ -72,7 +72,10 @@ body {
 
 #todo-list li.completed {
   text-decoration: line-through;
-  color: #aaa;
+}
+
+#todo-list li.notcompleted {
+  text-decoration: dashed;
 }
 
 #todo-list li button {

@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"
-import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"
+import { getDatabase, ref, push, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js"
 
 const firebaseConfig = {
@@ -92,9 +92,8 @@ window.addEventListener('load', checkAuthentication)
 
 
 
+var localTodo = []
 
-
-var globalindex = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
     const users = JSON.parse(sessionStorage.getItem('user'))
@@ -108,12 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (title) {
             document.getElementById("noData").style.display = "none"
             const user = JSON.parse(sessionStorage.getItem('user'))
-            var inputValue = { title, completed: false }
-            let userReference = ref(database, `usersData/${user.uid}/${globalindex}`)
-            set(userReference, inputValue)
-            globalindex += 1;
+            var inputValue = { title: title, completed: false }
+            localTodo.push(inputValue)
+            saveTodos()
+            let userReference = ref(database, `usersData/${user.uid}`)
+            push(userReference, inputValue);
             todoInput.value = '';
         }
+
     };
 
     addButton.addEventListener('click', addTodo);
@@ -138,59 +139,73 @@ document.getElementById("logoutButton").addEventListener("click", () => {
     setTimeout(() => { location.reload() }, 2000)
 
 })
+const saveTodos = () => {
+    localStorage.setItem('localTodo', JSON.stringify(localTodo));
+};
 
-
-window.toggleComplete = (index) => {
-    const user = JSON.parse(sessionStorage.getItem('user'))
+window.toggleComplete = (key) => {
+    const user = JSON.parse(sessionStorage.getItem('user'));
     const userId = user.uid;
-    let userWinsRef = ref(database, `usersData/${userId}/${index}/completed`);
-    set(userWinsRef, "true")
+    let userWinsRef = ref(database, `usersData/${userId}/${key}`);
+    let final = ref(database, `usersData/${userId}/${key}/completed`);
+    let completedValue = ""; // Initialize it here
+
+    get(userWinsRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            // Data exists at the specified location
+            const completedData = snapshot.val();
+            // Do something with the retrieved data
+            completedValue = (completedData.completed === "true") ? "false" : "true"; // Toggle the value
+        } else {
+            // Data does not exist at the specified location
+            console.log("No data available");
+        }
+        return set(final, completedValue); // Return the set operation
+    }).catch((error) => {
+        console.error("Error getting data:", error);
+    });
 
 };
-window.deleteTodo = (index) => {
+window.deleteTodo = (key) => {
+    console.log("deleted")
     const user = JSON.parse(sessionStorage.getItem('user'))
     const userId = user.uid;
-    let userWinsRef = ref(database, `usersData/${userId}/${index}`);
+    let userWinsRef = ref(database, `usersData/${userId}/${key}`);
     remove(userWinsRef)
+    renderWinsFromDatabase(userId)
 };
 
 function renderWinsFromDatabase(userId) {
     let userWinsRef = ref(database, `usersData/${userId}`)
     onValue(userWinsRef, function (snapshot) {
         if (snapshot.exists()) {
-
-            // winsFeed.innerHTML = ""
-
+            document.getElementById("todo-list").style.height="200px";
             const todoList = document.getElementById('todo-list');
+            todoList.innerHTML = "";
             const winsObj = snapshot.val();
-            const todos = Object.values(winsObj);
-            function renderTodos() {
-                todoList.innerHTML = '';
-                // var todos = []
-                todos.forEach((todo, index) => {
+            const length = Object.keys(winsObj).length;
+            for (const key in winsObj) {
+                if (winsObj.hasOwnProperty(key)) {
+                    // console.log(key + ": " + winsObj[key].title);
                     const li = document.createElement('li');
-                    li.className = todo.completed ? 'completed' : '';
+                    li.className = (winsObj[key].completed === "true") ? 'completed' : 'notcompleted';
                     li.innerHTML = `
            <div>
-           <span>${todo.title}</span>
+           <span>${winsObj[key].title}</span>
            <div>
-               <button onclick="toggleComplete(${index})">${todo.completed ? 'Undo' : 'Complete'}</button>
-               <button onclick="deleteTodo(${index})">Delete</button>
+           <button onclick="toggleComplete('${key}')">${(winsObj[key].completed === "true") ? 'Undo' : 'Complete'}</button>
+           <button onclick="deleteTodo('${key}')">Delete</button>           
            </div>
            </div>
         `;
                     todoList.appendChild(li);
-                });
+                }
             }
-            renderTodos()
 
         } else {
-            document.getElementById("noData").innerText = "No records here... yet"
+            document.getElementById("noData").innerText = "No records here... yet";
+            document.getElementById("todo-list").style.height="50px";
+            document.getElementById("todo-list").innerText = "";
         }
     })
 }
-
-document.getElementById("getData").addEventListener("click", () => {
-    // const user = JSON.parse(sessionStorage.getItem('user'))
-    // renderWinsFromDatabase(user.uid);
-})
