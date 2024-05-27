@@ -176,20 +176,25 @@ function renderTodoFromDatabase(userId) {
                 if (todoObj.hasOwnProperty(key)) {
                     const li = document.createElement('li');
                     li.innerHTML = `
-           <div>
-           <span id="usertodocompleted">${todoObj[key].title}</span>
-           <br>
-           <div class="twoButttons">
-           <button onclick="toggleComplete('${key}')">${(todoObj[key].completed === "true") ? 'Undo' : 'Complete'}</button>
-           <button onclick="deleteTodo('${key}')">Delete</button>           
-           </div>
-           </div>
-        `;
+                        <div>
+                            <span class="usertodocompleted" data-key="${key}">${todoObj[key].title}</span>
+                            <br>
+                            <div class="twoButtons">
+                                <button onclick="toggleComplete('${key}')">${(todoObj[key].completed === "true") ? 'Undo' : 'Complete'}</button>
+                                <button onclick="deleteTodo('${key}')">Delete</button>
+                            </div>
+                        </div>
+                    `;
                     todoList.appendChild(li);
-                    document.getElementById('usertodocompleted').className = (todoObj[key].completed === "true") ? 'completed' : 'notcompleted';
-
                 }
             }
+
+            const items = document.querySelectorAll('.usertodocompleted');
+            items.forEach(item => {
+                const key = item.getAttribute('data-key');
+                item.className = `usertodocompleted ${(todoObj[key].completed === "true") ? 'completed' : 'notcompleted'}`;
+            });
+
 
         } else {
             document.getElementById("noData").innerText = "No records here... yet";
