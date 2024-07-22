@@ -17,7 +17,7 @@ const database = getDatabase(app)
 
 const auth = getAuth(app)
 const provider = new GoogleAuthProvider()
-const contactDatainDB = ref(database, "usersData")
+//const contactDatainDB = ref(database, "usersData")
 
 
 
@@ -34,7 +34,6 @@ async function signInWithGoogle() {
         Swal.fire('Login Successfully', `Welcome to Kabilan's TODOAPP`, 'success');
         checkAuthentication();
     } catch (error) {
-        // Handle errors
         console.error("Error signing in:", error)
     }
 }
